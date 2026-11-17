@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Freelance Invoice & Bill Maker</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: #1e293b; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
+        h1 { text-align: center; color: #38bdf8; margin-bottom: 25px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        label { display: block; font-size: 13px; color: #94a3b8; margin-bottom: 5px; }
+        input, select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #334155; }
+        th { background: #0f172a; color: #38bdf8; }
+        .btn { padding: 10px 16px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; margin-top: 15px; }
+        .btn-add { background: #3b82f6; color: white; }
+        .btn-del { background: #ef4444; color: white; padding: 6px 10px; }
+        .btn-print { background: #22c55e; color: white; width: 100%; font-size: 16px; padding: 14px; margin-top: 25px; }
+        .summary { margin-top: 25px; text-align: right; font-size: 18px; }
+        .summary span { color: #22c55e; font-weight: bold; font-size: 22px; }
+
+        /* Print / PDF Styles */
+        @media print {
+            body { background: white; color: black; padding: 0; }
+            .container { box-shadow: none; background: white; color: black; width: 100%; max-width: 100%; }
+            input, select { border: none; background: transparent; color: black; padding: 0; font-weight: bold; }
+            .btn, .no-print { display: none !important; }
+            th { background: #f1f5f9 !important; color: black !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🧾 Freelance Invoice Maker</h1>
+
+    <div class="grid">
+        <div>
+            <label>Your Name / Agency Name</label>
+            <input type="text" id="myName" placeholder="e.g. Vivek Web & AI Studio">
+        </div>
+        <div>
+            <label>Client Name / Company</label>
+            <input type="text" id="clientName" placeholder="e.g. Dubai Tech Solutions">
+        </div>
+        <div>
+            <label>Invoice Number</label>
+            <input type="text" id="invNumber" value="INV-001">
+        </div>
+        <div>
+            <label>Currency</label>
+            <select id="currency" onchange="calculateTotal()">
+                <option value="$">USD ($) - International</option>
+                <option value="AED ">AED - Dubai</option>
+                <option value="₹">INR (₹) - India</option>
+            </select>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Service / Work Description</th>
+                <th style="width: 80px;">Qty/Hrs</th>
+                <th style="width: 120px;">Rate</th>
+                <th style="width: 120px;">Amount</th>
+                <th class="no-print" style="width: 50px;"></th>
+            </tr>
+        </thead>
+        <tbody id="itemsBody">
+            <tr>
+                <td><input type="text" placeholder="e.g. AI Website Development" class="desc"></td>
+                <td><input type="number" value="1" min="1" class="qty" oninput="calculateTotal()"></td>
+                <td><input type="number" value="100" min="0" class="rate" oninput="calculateTotal()"></td>
+                <td class="row-total">$100.00</td>
+                <td class="no-print"><button class="btn btn-del" onclick="removeRow(this)">X</button></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <button class="btn btn-add no-print" onclick="addRow()">+ Add More Service</button>
+
+    <div class="summary">
+        <p>Total Payable: <span id="grandTotal">$100.00</span></p>
+    </div>
+
+    <button class="btn btn-print no-print" onclick="window.print()">🖨️ Download / Save as PDF</button>
+</div>
+
+<script>
+    function addRow() {
+        const tbody = document.getElementById("itemsBody");
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td><input type="text" placeholder="Service description..." class="desc"></td>
+            <td><input type="number" value="1" min="1" class="qty" oninput="calculateTotal()"></td>
+            <td><input type="number" value="50" min="0" class="rate" oninput="calculateTotal()"></td>
+            <td class="row-total">0.00</td>
+            <td class="no-print"><button class="btn btn-del" onclick="removeRow(this)">X</button></td>
+        `;
+        tbody.appendChild(row);
+        calculateTotal();
+    }
+
+    function removeRow(btn) {
+        const row = btn.parentElement.parentElement;
+        row.remove();
+        calculateTotal();
+    }
+
+    function calculateTotal() {
+        const currency = document.getElementById("currency").value;
+        const rows = document.querySelectorAll("#itemsBody tr");
+        let grandTotal = 0;
+
+        rows.forEach(row => {
+            const qty = parseFloat(row.querySelector(".qty").value) || 0;
+            const rate = parseFloat(row.querySelector(".rate").value) || 0;
+            const total = qty * rate;
+            row.querySelector(".row-total").innerText = currency + total.toFixed(2);
+            grandTotal += total;
+        });
+
+        document.getElementById("grandTotal").innerText = currency + grandTotal.toFixed(2);
+    }
+
+    calculateTotal();
+</script>
+
+</body>
+</html>
