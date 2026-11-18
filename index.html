@@ -1,33 +1,36 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Freelance Invoice & Bill Maker</title>
+    <title>Freelance Invoice & Bill Maker Pro</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; }
-        .container { max-width: 800px; margin: 0 auto; background: #1e293b; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
+        .container { max-width: 800px; margin: 0 auto; background: #1e293b; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); box-sizing: border-box; }
         h1 { text-align: center; color: #38bdf8; margin-bottom: 25px; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
         label { display: block; font-size: 13px; color: #94a3b8; margin-bottom: 5px; }
-        input, select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; font-size: 14px; }
+        input, select, textarea { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; box-sizing: border-box; font-size: 14px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #334155; }
+        th, td { padding: 12px 8px; text-align: left; border-bottom: 1px solid #334155; }
         th { background: #0f172a; color: #38bdf8; }
         .btn { padding: 10px 16px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; margin-top: 15px; }
         .btn-add { background: #3b82f6; color: white; }
         .btn-del { background: #ef4444; color: white; padding: 6px 10px; }
         .btn-print { background: #22c55e; color: white; width: 100%; font-size: 16px; padding: 14px; margin-top: 25px; }
-        .summary { margin-top: 25px; text-align: right; font-size: 18px; }
-        .summary span { color: #22c55e; font-weight: bold; font-size: 22px; }
+        .summary-box { margin-top: 25px; text-align: right; font-size: 16px; line-height: 1.8; padding-right: 10px; }
+        .grand-total { font-size: 20px; font-weight: bold; color: #22c55e; border-top: 1px solid #334155; padding-top: 8px; display: inline-block; }
+        .notes-section { margin-top: 20px; }
 
-        /* Print / PDF Styles */
+        /* Print / PDF Styles - Fixed right margin cutting */
         @media print {
-            body { background: white; color: black; padding: 0; }
-            .container { box-shadow: none; background: white; color: black; width: 100%; max-width: 100%; }
-            input, select { border: none; background: transparent; color: black; padding: 0; font-weight: bold; }
+            @page { margin: 15mm; }
+            body { background: white; color: black; padding: 0; margin: 0; }
+            .container { box-shadow: none; background: white; color: black; width: 100%; max-width: 100%; padding: 10px; }
+            input, select, textarea { border: none; background: transparent; color: black; padding: 0; font-weight: bold; resize: none; }
             .btn, .no-print { display: none !important; }
             th { background: #f1f5f9 !important; color: black !important; }
+            .grand-total { color: #15803d !important; }
         }
     </style>
 </head>
@@ -50,6 +53,10 @@
             <input type="text" id="invNumber" value="INV-001">
         </div>
         <div>
+            <label>Invoice Date</label>
+            <input type="date" id="invDate">
+        </div>
+        <div>
             <label>Currency</label>
             <select id="currency" onchange="calculateTotal()">
                 <option value="$">USD ($) - International</option>
@@ -57,16 +64,20 @@
                 <option value="₹">INR (₹) - India</option>
             </select>
         </div>
+        <div>
+            <label>Tax / VAT / GST (%)</label>
+            <input type="number" id="taxRate" value="0" min="0" max="100" oninput="calculateTotal()">
+        </div>
     </div>
 
     <table>
         <thead>
             <tr>
                 <th>Service / Work Description</th>
-                <th style="width: 80px;">Qty/Hrs</th>
-                <th style="width: 120px;">Rate</th>
-                <th style="width: 120px;">Amount</th>
-                <th class="no-print" style="width: 50px;"></th>
+                <th style="width: 75px;">Qty/Hrs</th>
+                <th style="width: 110px;">Rate</th>
+                <th style="width: 110px;">Amount</th>
+                <th class="no-print" style="width: 45px;"></th>
             </tr>
         </thead>
         <tbody id="itemsBody">
@@ -82,14 +93,24 @@
 
     <button class="btn btn-add no-print" onclick="addRow()">+ Add More Service</button>
 
-    <div class="summary">
-        <p>Total Payable: <span id="grandTotal">$100.00</span></p>
+    <div class="summary-box">
+        <div>Subtotal: <strong id="subTotal">$100.00</strong></div>
+        <div>Tax (<span id="taxDisplay">0</span>%): <strong id="taxAmount">$0.00</strong></div>
+        <div class="grand-total">Total Payable: <span id="grandTotal">$100.00</span></div>
+    </div>
+
+    <div class="notes-section">
+        <label>Payment Details / Notes (UPI, Bank, or Terms)</label>
+        <textarea id="notes" rows="2" placeholder="e.g. Thank you for your business! Payment due within 7 days."></textarea>
     </div>
 
     <button class="btn btn-print no-print" onclick="window.print()">🖨️ Download / Save as PDF</button>
 </div>
 
 <script>
+    // Set today's date automatically
+    document.getElementById("invDate").valueAsDate = new Date();
+
     function addRow() {
         const tbody = document.getElementById("itemsBody");
         const row = document.createElement("tr");
@@ -112,17 +133,24 @@
 
     function calculateTotal() {
         const currency = document.getElementById("currency").value;
+        const taxRate = parseFloat(document.getElementById("taxRate").value) || 0;
         const rows = document.querySelectorAll("#itemsBody tr");
-        let grandTotal = 0;
+        let subTotal = 0;
 
         rows.forEach(row => {
             const qty = parseFloat(row.querySelector(".qty").value) || 0;
             const rate = parseFloat(row.querySelector(".rate").value) || 0;
             const total = qty * rate;
             row.querySelector(".row-total").innerText = currency + total.toFixed(2);
-            grandTotal += total;
+            subTotal += total;
         });
 
+        const taxAmount = (subTotal * taxRate) / 100;
+        const grandTotal = subTotal + taxAmount;
+
+        document.getElementById("subTotal").innerText = currency + subTotal.toFixed(2);
+        document.getElementById("taxDisplay").innerText = taxRate;
+        document.getElementById("taxAmount").innerText = currency + taxAmount.toFixed(2);
         document.getElementById("grandTotal").innerText = currency + grandTotal.toFixed(2);
     }
 
